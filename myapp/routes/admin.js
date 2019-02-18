@@ -3,7 +3,7 @@ var router = express.Router();
 
 
 router.get('/', function(req, res, next) {
-  res.render('admin', { title: 'admin' });
+  res.send('adminpost');
 });
 
 
