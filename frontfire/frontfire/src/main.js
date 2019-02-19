@@ -16,7 +16,6 @@ Vue.use(new VueSocketIO({
 debug: false,
 connection: 'http://localhost:3000',
 }));
-Vue.prototype.$socket = socketio;
 Vue.prototype.$axios = axios;
 
 /* eslint-disable no-new */

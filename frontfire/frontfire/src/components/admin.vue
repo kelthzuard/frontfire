@@ -20,7 +20,7 @@
                             <Button type="error" size="small" @click="getsocket">删除</Button>
                           </MenuItem>
                         </div>
-                        <Button type="primary" style="margin-left: 40px;">新建火灾信息</Button>
+                        <Button type="primary" style="margin-left: 40px;" @click="startNewModal">新建火灾信息</Button>
                     </Submenu>
                 </Menu>
             </Sider>
@@ -30,21 +30,33 @@
                   <p slot="title">
                       具体位置信息:
                   </p>
-                  <p>"四川省成都市成华区猛追湾街道四川油气田总部机关住宅区电子科技大学继续教育学院"</p>
+                  <p>{{this.locationInfo}}</p>
                 </Card>
             </Layout>
         </Layout>
     </Layout>
+    <Modal
+    v-model="startNew"
+    :loading="startNewLoading"
+    @on-cancle="cancleNew"
+    @on-ok="sendNewQuest">
+      <p>报警人电话:<Input style="width:200px" v-model="newQuest.phoneNumber"></Input></p>
+      <p>报警人信息位置描述:<Input type="textarea" v-model="newQuest.desc"></Input></p>
+    </Modal>
 </div>
 </template>
 <script>
-import axios from 'axios'
-import socket from 'vue-socket.io'
 export default {
   name: 'admim',
-  map: null,
   data () {
     return {
+      newQuest: {
+        phoneNumber: '',
+        desc: ''
+      },
+      startNew:false,
+      startNewLoading: true,
+      locationInfo: '',
       currentItem: 0,
       numberList: [{
         number: '18380266573',
@@ -71,50 +83,16 @@ export default {
     }
   },
   methods: {
-    changeItem: (index) => {
+    changeItem (index) {
     },
-    createMap: () => {
+    createMap () {
       var map = new AMap.Map('container', {
           resizeEnable: true,
           zoom:11,
           center: [104.09659999999997, 30.67394]
       });
     },
-    getLocation: function() {
-      let self = this
-      AMap.plugin('AMap.Geolocation', function() {
-          var geolocation = new AMap.Geolocation({
-              enableHighAccuracy: true,//是否使用高精度定位，默认:true
-              timeout: 10000,          //超过10秒后停止定位，默认：5s
-              buttonPosition:'RB',    //定位按钮的停靠位置
-              buttonOffset: new AMap.Pixel(10, 20),//定位按钮与设置的停靠位置的偏移量，默认：Pixel(10, 20)
-              zoomToAccuracy: true,   //定位成功后是否自动调整地图视野到定位点
-
-          });
-          geolocation.getCurrentPosition(function(status,result){
-              if(status=='complete'){
-                  self.onComplete(result);
-              }else{
-                  self.onError(result);
-              }
-          });
-      });
-    },
-    onComplete: function(result) {
-      let self = this;
-      axios({
-          method:'post',
-          url:'http://localhost:3000',
-          data: {
-            data: result
-          }
-      }).then((response) =>{          //这里使用了ES6的语法
-          console.log(response)     //请求成功返回的数据
-      }).catch((error) =>{
-          console.log(error)       //请求失败返回的数据
-      });
-    },
-    drawMarker: function(message) {
+    drawMarker (message) {
       var data = message.msg;
       var postion = [];
       postion[1] = data.position.Q;
@@ -130,15 +108,63 @@ export default {
       });
       map.add(marker);
       map.setFitView();
+      this.locationInfo = data.formattedAddress;
       console.log(data);
     },
-    getsocket: () => {
-      socket.emit('client message', 'admin');
+    getsocket () {
+      this.$socket.emit('client message', 'admin');
+    },
+    startNewModal () {
+      this.startNew = true
+    },
+    cancleNew () {
+      this.startNew = false
+    },
+    isPoneAvailable (num) {
+      let numreg=/^[1][3,4,5,7,8][0-9]{9}$/;
+      if (!numreg.test(num)) {
+          return false;
+      } else {
+          return true;
+      }
+    },
+    sendNewQuest () {
+      let iserror = false
+      let self = this
+      if (this.newQuest.phoneNumber === '') {
+        this.$Message.error('电话号码不能为空')
+        iserror = true
+      }
+      if (!this.isPoneAvailable(this.newQuest.phoneNumber)) {
+        this.$Message.error('请输入正确的电话号码')
+        iserror = true
+      }
+      if (iserror) {
+        setTimeout(() => {
+          this.startNewLoading = false
+          this.$nextTick(() => {
+            self.startNewLoading= true;
+          });
+        }, 1000)
+      }else {
+        this.$axios({
+            method:'post',
+            url:'http://localhost:3000/admin',
+            data: {
+              data: self.newQuest
+            }
+        }).then((response) =>{         
+            this.$Message.info('新建成功')
+            this.startNew = false    
+        }).catch((error) =>{
+            this.$Message.error('新建失败')     
+            this.startNew = false 
+        });
+        }
     }
   },
   mounted () {
     this.createMap();
-    this.getLocation();
   }
 }
 </script>
