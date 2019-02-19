@@ -20,6 +20,13 @@ app.all('*', function (req, res, next) {
   next();
 });
 
+mongoose.connect('mongodb://localhost:27017/local');
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function () {
+  console.log('connnection successful')
+});
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

@@ -1,6 +1,4 @@
 
-
-
 function socketUse(server){
   this.server = server;
   this.init = function(){

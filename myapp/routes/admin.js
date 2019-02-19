@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var crypto = require('crypto');
+var model = require('../common/model');
 
 
 router.get('/', function(req, res, next) {
@@ -13,8 +14,18 @@ router.post('/', function(req, res, next) {
   var md5 = crypto.createHash('md5');
   md5.update(content);
   var secretNum = md5.digest('hex');
-  console.log("加密的结果："+secretNum);
-  res.status(200).send('ok');
+  var phone = model.phone;
+  phone.create({
+      phoneNumber:req.body.data.phoneNumber,
+      secretNumber:secretNum,
+      desc: req.body.data.desc
+  },function(err,doc){
+      if(err){
+          res.sendStatus(500);
+      }else{
+          res.status(200).send('success');
+      }
+  });
 });
 
 
