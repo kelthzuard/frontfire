@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var socket_io = require('socket.io');
+var mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
@@ -11,16 +12,16 @@ var clientRouter = require('./routes/client');
 
 var app = express();
 
-app.all('*', function (req, res, next) {
+/*app.all('*', function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "*");
   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
   res.header("X-Powered-By",' 3.2.1')
   res.header("Content-Type", "application/json;charset=utf-8");
   next();
-});
+});*/
 
-mongoose.connect('mongodb://localhost:27017/local');
+mongoose.connect('mongodb://localhost:27017/map');
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {

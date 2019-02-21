@@ -18,13 +18,26 @@ router.post('/', function(req, res, next) {
   phone.create({
       phoneNumber:req.body.data.phoneNumber,
       secretNumber:secretNum,
-      desc: req.body.data.desc
+      desc: req.body.data.desc,
+      location: 'unknow'
   },function(err,doc){
       if(err){
           res.sendStatus(500);
       }else{
+        console.log(doc);
           res.status(200).send('success');
       }
+  });
+});
+
+router.get('/getList', function(req, res ,next) {
+  var phone = model.phone;
+  phone.find({},function(err,doc){
+    if (err) {
+      res.sendStatus(404);
+    }else {
+      res.status(200).send(doc);
+    }
   });
 });
 
