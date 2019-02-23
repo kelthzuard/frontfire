@@ -77,7 +77,7 @@ export default {
       for (let i = 0; i < this.numberList.length; i++) {
         if ((response.msg.phoneNumber === this.currentPointer) && (this.numberList[i].phoneNumber === this.currentPointer)) {
           this.numberList[i] = response.msg
-          this.secretNumber = 'http://120.78.79.229:8080/#/client/'+this.numberList[i].secretNumber
+          this.secretNumber = 'http://localhost:3000/#/client/'+this.numberList[i].secretNumber
           let location = JSON.parse(this.numberList[i].location)
           this.locationInfo = location.formattedAddress
           this.drawMarker(location)
@@ -89,7 +89,7 @@ export default {
     changeItem (index) {
       this.currentPointer = index
       for (let i = 0; i < this.numberList.length; i++) {
-        this.secretNumber = 'http://120.78.79.229:8080/#/client/'+this.numberList[i].secretNumber
+        this.secretNumber = 'http://localhost:3000/#/client/'+this.numberList[i].secretNumber
         if (index === this.numberList[i].phoneNumber) {
           if (this.numberList[i].location === 'unknow') {
             this.locationInfo = '等待确认'
@@ -167,7 +167,7 @@ export default {
       }else {
         this.$axios({
             method:'post',
-            url:'http://120.78.79.229:3000/admin',
+            url:'http://localhost:3000/admin',
             data: {
               data: self.newQuest
             }
@@ -184,12 +184,15 @@ export default {
     getData () {
       this.$axios({
           method:'get',
-          url:'http://120.78.79.229:3000/admin/getList',
+          url:'http://localhost:3000/admin/getList',
       }).then((response) =>{         
-        console.log(response)
-        this.numberList = response.data
+        if (response.data === 'notLogin') {
+          this.$router.push({path: '/'})
+        }else {
+          this.numberList = response.data
+        }
       }).catch((error) =>{
-          this.$Message.error('新建失败')     
+          this.$Message.error('获取列表失败')     
       });
     }
   },

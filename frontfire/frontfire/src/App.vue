@@ -13,5 +13,6 @@ export default {
 <style>
 html, body, #app{
   height: 100%;
+  position: relative;
 }
 </style>

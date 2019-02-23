@@ -5,21 +5,26 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var socket_io = require('socket.io');
 var mongoose = require('mongoose');
+var cors = require('cors')
+var model = require('./common/model');
+var session = require('express-session')
 
 var indexRouter = require('./routes/index');
 var adminRouter = require('./routes/admin');
 var clientRouter = require('./routes/client');
+var loginRouter = require('./routes/login');
 
 var app = express();
 
 /*app.all('*', function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type");
   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
-  res.header("X-Powered-By",' 3.2.1')
-  res.header("Content-Type", "application/json;charset=utf-8");
+  res.header("X-Powered-By",' 3.2.1');
   next();
 });*/
+
+app.use(cors());
 
 mongoose.connect('mongodb://localhost:27017/map');
 var db = mongoose.connection;
@@ -28,6 +33,17 @@ db.once('open', function () {
   console.log('connnection successful')
 });
 
+/*var user = model.user;
+user.create({
+  userName: '123456',
+  userPassword: '123456'
+}, function (err, doc) {
+  if (err) {
+    console.log(err);
+  }else {
+    console.log(doc);
+  }
+})*/
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -42,9 +58,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(session({ 
+  secret: 'keyboard cat', 
+  cookie: { maxAge: 60000 },
+  resave : false,
+  saveUninitialized: true
+}));
+
 app.use('/', indexRouter);
 app.use('/admin', adminRouter);
 app.use('/client', clientRouter);
+app.use('/login', loginRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

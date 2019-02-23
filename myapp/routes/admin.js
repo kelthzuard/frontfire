@@ -31,14 +31,19 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getList', function(req, res ,next) {
-  var phone = model.phone;
-  phone.find({},function(err,doc){
-    if (err) {
-      res.sendStatus(404);
-    }else {
-      res.status(200).send(doc);
-    }
-  });
+  console.log(req.session)
+  if (req.session.islog != 1) {
+    res.status(200).send('notLogin');
+  }else {
+    var phone = model.phone;
+    phone.find({},function(err,doc){
+      if (err) {
+        res.sendStatus(404);
+      }else {
+        res.status(200).send(doc);
+      }
+    });
+  }
 });
 
 

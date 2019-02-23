@@ -33,7 +33,7 @@ export default {
       let params = this.$route.params.number
       this.$axios({
           method:'post',
-          url:'http://120.78.79.229:3000/client?number='+params,
+          url:'http://localhost:3000/client?number='+params,
           data: {
             data: result
           }
