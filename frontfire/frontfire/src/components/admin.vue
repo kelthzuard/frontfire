@@ -17,7 +17,7 @@
                         </template>
                         <div v-for="(item,index) in numberList" :key="index">
                           <MenuItem :name="item.phoneNumber">{{item.phoneNumber}}
-                            <Button type="error" size="small" @click="getsocket">删除</Button>
+                            <Button type="error" size="small" @click="deleteItem(index)">删除</Button>
                           </MenuItem>
                         </div>
                         <Button type="primary" style="margin: 20px 0 0 40px;" @click="startNewModal">新建火灾信息</Button>
@@ -44,6 +44,13 @@
       <p>报警人电话:<Input style="width:200px" v-model="newQuest.phoneNumber"></Input></p>
       <p>报警人信息位置描述:<Input type="textarea" v-model="newQuest.desc"></Input></p>
     </Modal>
+    <Modal
+    v-model="deleteModal"
+    @on-cancle="cancleDelete"
+    @on-ok="sendDelete"
+    style="text-align:center">
+      <p>是否删除电话号码为{{deleteAim}}的位置信息?</p>
+    </Modal>
 </div>
 </template>
 <script>
@@ -51,6 +58,8 @@ export default {
   name: 'admim',
   data () {
     return {
+      deleteModal: false,
+      deleteAim: '',
       newQuest: {
         phoneNumber: '',
         desc: ''
@@ -77,7 +86,7 @@ export default {
       for (let i = 0; i < this.numberList.length; i++) {
         if ((response.msg.phoneNumber === this.currentPointer) && (this.numberList[i].phoneNumber === this.currentPointer)) {
           this.numberList[i] = response.msg
-          this.secretNumber = 'http://localhost:3000/#/client/'+this.numberList[i].secretNumber
+          this.secretNumber = '//firelocater.top/#/client/'+this.numberList[i].secretNumber
           let location = JSON.parse(this.numberList[i].location)
           this.locationInfo = location.formattedAddress
           this.drawMarker(location)
@@ -89,7 +98,7 @@ export default {
     changeItem (index) {
       this.currentPointer = index
       for (let i = 0; i < this.numberList.length; i++) {
-        this.secretNumber = 'http://localhost:3000/#/client/'+this.numberList[i].secretNumber
+        this.secretNumber = '//firelocater.top/#/client/'+this.numberList[i].secretNumber
         if (index === this.numberList[i].phoneNumber) {
           if (this.numberList[i].location === 'unknow') {
             this.locationInfo = '等待确认'
@@ -146,6 +155,30 @@ export default {
           return true;
       }
     },
+    deleteItem (index) {
+      this.deleteAim = this.numberList[index].phoneNumber
+      this.deleteModal = true
+    },
+    sendDelete () {
+      let self = this
+      this.$axios({
+          method:'post',
+          url:'//firelocater.top/admin/delete',
+          data: {
+            phoneNumber: self.deleteAim
+          }
+      }).then((response) =>{         
+          this.$Message.info('删除成功')
+          this.deleteModal = false    
+          this.getData()
+      }).catch((error) =>{
+          this.$Message.error('删除失败')     
+          this.deleteModal = false 
+      })
+    },
+    cancleDelete () {
+      this.deleteModal = false
+    },
     sendNewQuest () {
       let iserror = false
       let self = this
@@ -167,7 +200,7 @@ export default {
       }else {
         this.$axios({
             method:'post',
-            url:'http://localhost:3000/admin',
+            url:'//firelocater.top/admin',
             data: {
               data: self.newQuest
             }
@@ -184,7 +217,7 @@ export default {
     getData () {
       this.$axios({
           method:'get',
-          url:'http://localhost:3000/admin/getList',
+          url:'//firelocater.top/admin/getList',
       }).then((response) =>{         
         if (response.data === 'notLogin') {
           this.$router.push({path: '/'})

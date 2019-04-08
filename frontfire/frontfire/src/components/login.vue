@@ -5,7 +5,7 @@
       <span>账号：</span><Input v-model="userName" class="input"></Input>
     </div>
     <div class="inputModal">
-      <span>密码：</span><Input v-model="userPassword" class="input"></Input>
+      <span>密码：</span><Input v-model="userPassword" class="input" type="password"></Input>
     </div>
     <Button type="info" @click="login">登录</Button>
   </Card>
@@ -28,7 +28,7 @@ export default {
       }
       this.$axios({
           method:'post',
-          url:'http://localhost:3000/login',
+          url:'//firelocater.top/login',
           //withCredentials:true,
           data: {
             userName: self.userName,

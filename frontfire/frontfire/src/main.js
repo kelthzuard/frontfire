@@ -14,7 +14,7 @@ Vue.config.productionTip = false;
 Vue.use(iView);
 Vue.use(new VueSocketIO({
 debug: false,
-connection: 'http://localhost:3000',
+connection: '//firelocater.top',
 }));
 Vue.prototype.$axios = axios;
 
