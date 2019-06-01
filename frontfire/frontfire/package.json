@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "babel-polyfill": "^6.26.0",
+    "es6-promise": "^4.2.6",
     "iview": "^3.2.2",
     "socket.io-client": "^2.2.0",
     "vue": "^2.5.2",

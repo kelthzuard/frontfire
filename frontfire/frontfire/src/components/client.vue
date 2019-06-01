@@ -1,5 +1,5 @@
 <template>
-  <div>{{info}}</div>
+  <div class="info">{{info}}</div>
 </template>
 <script>
 export default {
@@ -33,7 +33,7 @@ export default {
       let params = this.$route.params.number
       this.$axios({
           method:'post',
-          url:'//firelocater.top/client?number='+params,
+          url:'/client?number='+params,
           data: {
             data: result
           }
@@ -50,7 +50,14 @@ export default {
 }
 </script>
 <style scoped>
-
+.info{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 26px;
+  color: #000;
+}
 </style>
 
 

@@ -28,7 +28,7 @@ export default {
       }
       this.$axios({
           method:'post',
-          url:'//firelocater.top/login',
+          url:'/login',
           //withCredentials:true,
           data: {
             userName: self.userName,

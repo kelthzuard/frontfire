@@ -10,7 +10,7 @@
         </Header>
         <Layout>
             <Sider hide-trigger :style="{background: '#fff'}">
-                <Menu theme="light" width="auto" :open-names="['1']" :active-name="currentItem" @on-select="changeItem">
+                <Menu theme="light" width="auto" :open-names="['1']" @on-select="changeItem" ref="side_menu">
                     <Submenu name="1">
                         <template slot="title">
                             报警人员列表
@@ -31,7 +31,8 @@
                       具体位置信息:
                   </p>
                   <p>{{this.locationInfo}}</p>
-                  <p style="word-wrap:break-word">位置确认url:{{this.secretNumber}}</p>
+                  <p style="word-wrap:break-word"><b>报警人描述信息:</b>{{this.currentDesc}}</p>
+                  <Button type="primary" @click="resendMsg()">{{sendMsgInfo}}</Button>
                 </Card>
             </Layout>
         </Layout>
@@ -59,18 +60,22 @@ export default {
   data () {
     return {
       deleteModal: false,
+      map: null,
+      marker: null,
       deleteAim: '',
       newQuest: {
         phoneNumber: '',
         desc: ''
       },
       currentPointer: '',
-      secretNumber: '',
+      currentDesc: '',
       startNew:false,
       startNewLoading: true,
       locationInfo: '',
-      currentItem: 0,
-      numberList: []
+      currentItem: '18380266573',
+      numberList: [],
+      sendMsgInfo: '重发短信',
+      sendStatus: false
     }
   },
   sockets: {
@@ -86,7 +91,7 @@ export default {
       for (let i = 0; i < this.numberList.length; i++) {
         if ((response.msg.phoneNumber === this.currentPointer) && (this.numberList[i].phoneNumber === this.currentPointer)) {
           this.numberList[i] = response.msg
-          this.secretNumber = '//firelocater.top/#/client/'+this.numberList[i].secretNumber
+          this.currentDesc = this.numberList[i].desc
           let location = JSON.parse(this.numberList[i].location)
           this.locationInfo = location.formattedAddress
           this.drawMarker(location)
@@ -96,20 +101,24 @@ export default {
   },
   methods: {
     changeItem (index) {
+      this.$refs.side_menu.updateActiveName()
       this.currentPointer = index
       for (let i = 0; i < this.numberList.length; i++) {
-        this.secretNumber = '//firelocater.top/#/client/'+this.numberList[i].secretNumber
         if (index === this.numberList[i].phoneNumber) {
+          this.currentDesc = this.numberList[i].desc
           if (this.numberList[i].location === 'unknow') {
+            if (this.marker) {
+              this.map.remove(this.marker)
+            }
+            this.map.setFitView()
+            this.map.panTo([116.397428, 39.90923]);
             this.locationInfo = '等待确认'
-            var map = new AMap.Map('container', {
-                resizeEnable: true,
-                zoom:11,
-                center: [104.09659999999997, 30.67394]
-            });
           }else {
             let location = JSON.parse(this.numberList[i].location)
             this.locationInfo = location.formattedAddress
+            if (this.marker) {
+              this.map.remove(this.marker)
+            }
             this.drawMarker(location)
           }
         }
@@ -119,27 +128,24 @@ export default {
       var map = new AMap.Map('container', {
           resizeEnable: true,
           zoom:11,
-          center: [104.09659999999997, 30.67394]
+          center: [116.397428, 39.90923]
       });
+      this.map = map
     },
     drawMarker (message) {
-      var position = [];
-      position[1] = message.position.Q;
-      position[0] = message.position.R;
-      var map = new AMap.Map('container', {
-          resizeEnable: true,
-          zoom:11,
-          center: [104.09659999999997, 30.67394]
-      });
+      var position = []
+      position[1] = message.position.Q
+      position[0] = message.position.R
       var marker = new AMap.Marker({
           icon: "https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png",
           position: position
-      });
-      map.add(marker);
-      map.setFitView();
+      })
+      this.marker = marker
+      this.map.add(marker)
+      this.map.setFitView()
     },
     getsocket () {
-      this.$socket.emit('client message', 'admin');
+      this.$socket.emit('client message', 'admin')
     },
     startNewModal () {
       this.startNew = true
@@ -163,7 +169,7 @@ export default {
       let self = this
       this.$axios({
           method:'post',
-          url:'//firelocater.top/admin/delete',
+          url:'/admin/delete',
           data: {
             phoneNumber: self.deleteAim
           }
@@ -190,6 +196,12 @@ export default {
         this.$Message.error('请输入正确的电话号码')
         iserror = true
       }
+      this.numberList.forEach((item) => {
+        if (item.phoneNumber === this.newQuest.phoneNumber) {
+          this.$Message.error('此报警人已经存在')
+          iserror = true
+        }
+      })
       if (iserror) {
         setTimeout(() => {
           this.startNewLoading = false
@@ -200,7 +212,7 @@ export default {
       }else {
         this.$axios({
             method:'post',
-            url:'//firelocater.top/admin',
+            url:'/admin',
             data: {
               data: self.newQuest
             }
@@ -212,12 +224,12 @@ export default {
             this.$Message.error('新建失败')     
             this.startNew = false 
         });
-        }
+      }
     },
     getData () {
       this.$axios({
           method:'get',
-          url:'//firelocater.top/admin/getList',
+          url:'/admin/getList',
       }).then((response) =>{         
         if (response.data === 'notLogin') {
           this.$router.push({path: '/'})
@@ -226,6 +238,42 @@ export default {
         }
       }).catch((error) =>{
           this.$Message.error('获取列表失败')     
+      });
+    },
+    resendMsg () {
+      if (this.currentPointer === '') {
+        this.$Message.error('请先选择报警人员')
+        return false
+      }
+      if (this.sendStatus) {
+        return
+      }
+      this.sendStatus = true
+      let params = {
+        phoneNumber: this.currentPointer,
+        secretNumber: null
+      }
+      for (let i = 0;i < this.numberList.length; i ++) {
+        if (this.currentPointer === this.numberList[i].phoneNumber) {
+          params.secretNumber = this.numberList[i].secretNumber
+        }
+      }
+      this.sendMsgInfo = '正在发送'
+      this.$axios({
+          method:'post',
+          url:'/admin/resendMsg',
+          data: params
+      }).then((response) =>{         
+          this.$Message.info('发送成功') 
+          this.sendMsgInfo = '请等待'
+          setTimeout(() => {
+            this.sendStatus = false
+            this.sendMsgInfo = '重发短信'
+          }, 5000);  
+      }).catch((error) =>{
+          this.$Message.error('发送失败')
+          this.sendStatus = false
+          this.sendMsgInfo = '重发短信'     
       });
     }
   },
